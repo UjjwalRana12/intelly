@@ -2,20 +2,15 @@ import os
 import logging
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-
 from docx import Document
-
 from pdf2image import convert_from_path
-
 from openai import OpenAI 
 import base64
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import shutil
 from langchain.chains import LLMChain
-
 import re
-
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -24,10 +19,8 @@ from PIL import Image, ImageEnhance, ImageFilter
 import cv2
 import numpy as np
 
-# Import the extraction functionality
 from extract_text import extract_death_certificate_details, print_extracted_details, save_extracted_details
 
-# Initialize OpenAI client
 load_dotenv()  
 
 api_key = os.getenv("OPENAI_API_KEY")
@@ -69,14 +62,11 @@ def preprocess_image(image_path):
     # Apply threshold to get binary image
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
-    # Create preprocessed filename by inserting '_preprocessed' before the extension
     base_name = os.path.splitext(image_path)[0]
     extension = os.path.splitext(image_path)[1]
     preprocessed_path = f"{base_name}_preprocessed{extension}"
     
     cv2.imwrite(preprocessed_path, thresh)
-    
-    print(f"Enhanced image saved to: {preprocessed_path}")
     
     return preprocessed_path
 
@@ -113,7 +103,6 @@ def image_to_text(image_path):
         )
 
         plain_text_content = response.choices[0].message.content
-        print("plain_text_content:", plain_text_content)
         logging.info("OCR applied successfully using openai in image: %s", image_path)
         return plain_text_content
     except Exception as e:
@@ -124,20 +113,14 @@ def image_to_text(image_path):
 def image_to_text_enhanced(image_path):
     """Enhanced OCR with preprocessing"""
     try:
-        # Create preprocessed image directly
-        print("Creating preprocessed image...")
         preprocessed_path = preprocess_image(image_path)
         
-        # Use preprocessed image for OCR
-        print("Trying OCR with preprocessed image...")
         preprocessed_result = image_to_text(preprocessed_path)
         
-        print("Using preprocessed image result")
         return preprocessed_result
     except Exception as e:
         logging.error(f"Enhanced OCR failed: {e}")
         return "No text extracted from image"
-    
 
 def image_to_text_original(image_path):
     """OCR on original image without preprocessing"""
@@ -149,44 +132,77 @@ def image_to_text_original(image_path):
     except Exception as e:
         logging.error(f"Original OCR failed: {e}")
         return "No text extracted from image"
+
+def process_death_certificate(image_path):
+    """Process a single death certificate image and extract details"""
     
+    # Get base filename without extension for output files
+    base_name = os.path.splitext(os.path.basename(image_path))[0]
+    
+    print(f"\n{'='*60}")
+    print(f"PROCESSING: {os.path.basename(image_path)}")
+    print(f"{'='*60}")
+    
+    if not os.path.exists(image_path):
+        print(f"ERROR: Image file not found: {image_path}")
+        return False
+    
+    try:
+        
+        print(" Step 1:OCR processing...")
+        result = image_to_text_enhanced(image_path)
+        
+        if result == "No text extracted from image":
+            print("Failed to extract text from image")
+            return False
+        
+        print("✅ Text extraction successful")
+        
+        print("Step 2: Extracting structured details using LLM...")
+        details = extract_death_certificate_details(result)
+        
+        print("Step 3: Displaying extracted details...")
+        print_extracted_details(details)
+        
+        print(" Step 4: Saving results...")
+        
+        complete_filename = f"{base_name}_complete.txt"
+        save_extracted_details(details, complete_filename, result)
+        
+        # Save raw text only
+        raw_filename = f"{base_name}_raw.txt"
+        with open(raw_filename, "w", encoding="utf-8") as f:
+            f.write(result)
+        
+        # Check for enhanced image
+        enhanced_path = f"{os.path.splitext(image_path)[0]}_preprocessed{os.path.splitext(image_path)[1]}"
+        
+        print(f"Results saved:")
+        print(f"Raw text: {raw_filename}")
+        print(f"Complete details: {complete_filename}")
+        if os.path.exists(enhanced_path):
+            print(f"Enhanced image: {os.path.basename(enhanced_path)}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"ERROR processing {os.path.basename(image_path)}: {e}")
+        logging.error(f"Error processing {image_path}: {e}")
+        return False
 
 # Example usage
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('death_certificate_processing.log'),
+            logging.StreamHandler()
+        ]
+    )
     
     image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\beverly jean.jpg"
     
-    if os.path.exists(image_path):
-        print("Processing image with OpenAI OCR...")
-        
-        result = image_to_text_enhanced(image_path)
-        
-        print(f"\nExtracted text:\n{'-'*50}")
-        print(result)
-        print(f"{'-'*50}")
-        
-        # Extract specific details using the separate module
-        print("\nExtracting specific details using LLM...")
-        details = extract_death_certificate_details(result)
-        print_extracted_details(details)
-        
-        # Save both raw text and extracted details
-        save_extracted_details(details, "beverly_complete.txt", result)
-        
-        # Also save just the raw text
-        with open("beverly.txt", "w", encoding="utf-8") as f:
-            f.write(result)
-        print("Raw text saved to 'beverly.txt'")
-        
-        # Check for enhanced image with correct naming
-        base_name = os.path.splitext(image_path)[0]
-        extension = os.path.splitext(image_path)[1]
-        enhanced_path = f"{base_name}_preprocessed{extension}"
-        if os.path.exists(enhanced_path):
-            print(f"Enhanced image saved at: {enhanced_path}")
-        
-    else:
-        print("Image file not found!")
+    process_death_certificate(image_path)
 

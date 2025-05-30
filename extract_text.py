@@ -168,20 +168,20 @@ def save_extracted_details(details: DeathCertificateDetails, filename: str, raw_
     
     print(f"Extracted details saved to '{filename}'")
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    logging.basicConfig(level=logging.INFO)
+#     logging.basicConfig(level=logging.INFO)
     
     
-    if os.path.exists("beverly.txt"):
-        with open("beverly.txt", "r", encoding="utf-8") as f:
-            text = f.read()
+#     if os.path.exists("beverly.txt"):
+#         with open("beverly.txt", "r", encoding="utf-8") as f:
+#             text = f.read()
         
-        print("Extracting details from existing text file...")
-        details = extract_death_certificate_details(text)
-        print_extracted_details(details)
+#         print("Extracting details from existing text file...")
+#         details = extract_death_certificate_details(text)
+#         print_extracted_details(details)
         
-        # Save with extracted details
-        save_extracted_details(details, "beverly_details.txt", text)
-    else:
-        print("beverly.txt not found. Please run main.py first to extract text from image.")
+#         # Save with extracted details
+#         save_extracted_details(details, "beverly_details.txt", text)
+#     else:
+#         print("beverly.txt not found. Please run main.py first to extract text from image.")
