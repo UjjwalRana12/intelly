@@ -66,8 +66,11 @@ def preprocess_image(image_path):
     # Apply threshold to get binary image
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
+    # Create preprocessed filename by inserting '_preprocessed' before the extension
+    base_name = os.path.splitext(image_path)[0]
+    extension = os.path.splitext(image_path)[1]
+    preprocessed_path = f"{base_name}_preprocessed{extension}"
     
-    preprocessed_path = image_path.replace('.png', '_preprocessed.png')
     cv2.imwrite(preprocessed_path, thresh)
     
     print(f"Enhanced image saved to: {preprocessed_path}")
@@ -118,51 +121,57 @@ def image_to_text(image_path):
 def image_to_text_enhanced(image_path):
     """Enhanced OCR with preprocessing"""
     try:
-        # Try with original image first
-        print("Trying OCR with original image...")
-        original_result = image_to_text(image_path)
-        
-        # Always create and save the preprocessed image
+        # Create preprocessed image directly
         print("Creating preprocessed image...")
         preprocessed_path = preprocess_image(image_path)
         
-        # Try with preprocessed image if original didn't work well
-        if len(original_result.strip()) < 100:  # If result seems incomplete
-            print("Trying OCR with preprocessed image...")
-            preprocessed_result = image_to_text(preprocessed_path)
-            
-            # Return the better result
-            if len(preprocessed_result.strip()) > len(original_result.strip()):
-                print("Using preprocessed image result (better quality)")
-                return preprocessed_result
+        # Use preprocessed image for OCR
+        print("Trying OCR with preprocessed image...")
+        preprocessed_result = image_to_text(preprocessed_path)
         
-        print("Using original image result")
-        return original_result
+        print("Using preprocessed image result")
+        return preprocessed_result
     except Exception as e:
         logging.error(f"Enhanced OCR failed: {e}")
         return "No text extracted from image"
+    
+
+def image_to_text_original(image_path):
+    """OCR on original image without preprocessing"""
+    try:
+        print("Processing original image...")
+        original_result = image_to_text(image_path)
+        print("Using original image result")
+        return original_result
+    except Exception as e:
+        logging.error(f"Original OCR failed: {e}")
+        return "No text extracted from image"
+    
 
 # Example usage
 if __name__ == "__main__":
     # Set up logging
     logging.basicConfig(level=logging.INFO)
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\death.pdf_page_1.png"
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\beverly jean.jpg"
     
     if os.path.exists(image_path):
         print("Processing image with OpenAI OCR...")
         
-        # Use enhanced approach (tries both original and preprocessed)
+        
         result = image_to_text_enhanced(image_path)
+
+        
         
         print(f"\nExtracted text:\n{'-'*50}")
         print(result)
         print(f"{'-'*50}")
         
-        # Save result to file
-        with open("extracted_text.txt", "w", encoding="utf-8") as f:
+        
+        with open("beverly.txt", "w", encoding="utf-8") as f:
             f.write(result)
-        print("Text saved to 'extracted_text.txt'")
+        print("Text saved to 'beverly.txt'")
+        
         
         
         enhanced_path = image_path.replace('.png', '_preprocessed.png')
