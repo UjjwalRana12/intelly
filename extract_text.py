@@ -19,8 +19,8 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 class DeathCertificateDetails(BaseModel):
     """Pydantic model for death certificate information"""
     decedent_name: Optional[str] = Field(None, description="Full name of the deceased person")
-    date_of_birth: Optional[str] = Field(None, description="Date of birth in MM/DD/YYYY format")
-    date_of_death: Optional[str] = Field(None, description="Date of death in MM/DD/YYYY format")
+    date_of_birth: Optional[str] = Field(None, description="Date of birth ")
+    date_of_death: Optional[str] = Field(None, description="Date of death ")
     location_of_death: Optional[str] = Field(None, description="Place where death occurred")
     county: Optional[str] = Field(None, description="County where death occurred")
     social_security_number: Optional[str] = Field(None, description="Social Security Number")
@@ -65,12 +65,12 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         Please extract the following specific details from the given text:
 
         1. Decedent's name (full name of the deceased)
-        2. Date of birth (in MM/DD/YYYY format if possible)
-        3. Date of death (in MM/DD/YYYY format if possible)
-        4. Location of death (hospital, home, etc.)
+        2. Date of birth 
+        3. Date of death 
+        4. Location of death (Just Return What is Written in the Document")
         5. County (county where death occurred)
-        6. Social security number (XXX-XX-XXXX format)
-        7. Time pronounced dead (HH:MM AM/PM format if possible)
+        6. Social security number 
+        7. Time pronounced dead 
 
         Text to analyze:
         {text}
@@ -165,15 +165,17 @@ def save_extracted_details(details: DeathCertificateDetails, filename: str, raw_
         # Save as JSON for easy parsing later
         f.write("\n\nJSON FORMAT:\n")
         f.write("="*30 + "\n")
-        f.write(details.json(indent=2))
+        # Use json.dumps for formatting instead of details.json(indent=2)
+        import json
+        f.write(json.dumps(details.dict(), indent=2))
     
     print(f"Extracted details saved to '{filename}'")
 
 if __name__ == "__main__":
-    # Example usage - read from existing text file
+    
     logging.basicConfig(level=logging.INFO)
     
-    # Try to read from beverly.txt if it exists
+    
     if os.path.exists("beverly.txt"):
         with open("beverly.txt", "r", encoding="utf-8") as f:
             text = f.read()

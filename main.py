@@ -24,6 +24,9 @@ from PIL import Image, ImageEnhance, ImageFilter
 import cv2
 import numpy as np
 
+# Import the extraction functionality
+from extract_text import extract_death_certificate_details, print_extracted_details, save_extracted_details
+
 # Initialize OpenAI client
 load_dotenv()  
 
@@ -158,25 +161,31 @@ if __name__ == "__main__":
     if os.path.exists(image_path):
         print("Processing image with OpenAI OCR...")
         
-        
         result = image_to_text_enhanced(image_path)
-
-        
         
         print(f"\nExtracted text:\n{'-'*50}")
         print(result)
         print(f"{'-'*50}")
         
+        # Extract specific details using the separate module
+        print("\nExtracting specific details using LLM...")
+        details = extract_death_certificate_details(result)
+        print_extracted_details(details)
         
+        # Save both raw text and extracted details
+        save_extracted_details(details, "beverly_complete.txt", result)
+        
+        # Also save just the raw text
         with open("beverly.txt", "w", encoding="utf-8") as f:
             f.write(result)
-        print("Text saved to 'beverly.txt'")
+        print("Raw text saved to 'beverly.txt'")
         
-        
-        
-        enhanced_path = image_path.replace('.png', '_preprocessed.png')
+        # Check for enhanced image with correct naming
+        base_name = os.path.splitext(image_path)[0]
+        extension = os.path.splitext(image_path)[1]
+        enhanced_path = f"{base_name}_preprocessed{extension}"
         if os.path.exists(enhanced_path):
-            print(f"\nEnhanced image saved at: {enhanced_path}")
+            print(f"Enhanced image saved at: {enhanced_path}")
         
     else:
         print("Image file not found!")

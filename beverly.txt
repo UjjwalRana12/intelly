@@ -1,7 +1,4 @@
 ```
-LF
-CF 186
-
 STATE OF MICHIGAN
 DEPARTMENT OF HEALTH AND HUMAN SERVICES
 CERTIFICATE OF DEATH
@@ -30,9 +27,9 @@ Beverly Jean Dunkle
 
 6b. UNDER 1 YEAR
 MONTHS
-DAYS
-HOURS
-MINUTES
+
+6c. UNDER 1 DAY
+DAYS HOURS MINUTES
 
 7a. LOCATION OF DEATH
 2563 South Finley Lake Avenue 48625
@@ -67,16 +64,16 @@ Harrison, Michigan
 11. DECEDENT'S EDUCATION
 High school graduate
 
-11. RACE
+12. RACE
 White
 
-12. ANCESTRY
+13a. ANCESTRY
 American
 
-13a. HISPANIC ORIGIN
+13b. HISPANIC ORIGIN
 No
 
-13b. EVER IN THE U.S. ARMED FORCES?
+14. EVER IN THE U.S. ARMED FORCES?
 No
 
 15. USUAL OCCUPATION
@@ -92,7 +89,7 @@ Widowed
 19. FATHER'S NAME (First, Middle, Last)
 Austin Eli Dunkle
 
-26. MOTHER'S NAME BEFORE FIRST MARRIAGE (First, Middle, Last)
+20. MOTHER'S NAME BEFORE FIRST MARRIAGE (First, Middle, Last)
 Virginia May Hitts
 
 21a. INFORMANT'S NAME
@@ -110,7 +107,7 @@ Burial
 23. PLACE OF DISPOSITION
 Surrey Township Cemetery
 
-23b. LOCATION - City, Village, Township
+23b. LOCATION - City, Village, Twp
 Surrey Twp, Michigan
 
 24. SIGNATURE OF MORTUARY SCIENCE LICENSEE
@@ -151,15 +148,14 @@ N/A
 33. NAME OF ATTENDING PHYSICIAN IF OTHER THAN CERTIFIER
 
 34. NAME AND ADDRESS OF CERTIFYING PHYSICIAN
-Prakash Sarvepalli, MD, 1021 E. Main St, Edmore, Michigan 48829
+Prakash Servapatil, MD, 1021 E. Main St, Edmore, Michigan 48829
 
 35a. REGISTRAR'S SIGNATURE
-Bari Natt
 
 35b. DATE FILED
 July 19, 2023
 
-PART I. Enter the chain of events - diseases, injuries, or complications - that directly caused the death. DO NOT enter terminal events such as cardiac arrest, respiratory arrest, or ventricular fibrillation without showing the etiology.
+36. PART I. Enter the chain of events - diseases, injuries, or complications - that directly caused the death. DO NOT enter terminal events such as cardiac arrest, respiratory arrest, or ventricular fibrillation without showing the etiology. Enter only one cause on a line.
 
 Approximate Interval Between Onset and Death
 
@@ -167,18 +163,18 @@ a. Senile Degenerative Brain Disease
 
 1 Month
 
-DUE TO (OR AS A CONSEQUENCE OF)
+DUE TO (OR AS A CONSEQUENCE OF):
 
-DUE TO (OR AS A CONSEQUENCE OF)
+DUE TO (OR AS A CONSEQUENCE OF):
 
-DUE TO (OR AS A CONSEQUENCE OF)
+DUE TO (OR AS A CONSEQUENCE OF):
 
 PART II. OTHER SIGNIFICANT CONDITIONS contributing to death but not resulting in the underlying cause given in Part I.
 
 37. DID TOBACCO USE CONTRIBUTE TO DEATH?
 No
 
-38. IF FEMALE
+38. IF FEMALE:
 Not pregnant within past year
 
 39. MANNER OF DEATH
@@ -198,6 +194,7 @@ No
 Not Applicable
 
 41d. INJURY AT WORK?
+No
 
 41e. IF TRANSPORTATION INJURY
 41f. LOCATION
