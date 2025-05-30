@@ -40,11 +40,8 @@ class DeathCertificateDetails(BaseModel):
     def validate_date_format(cls, v):
         if v is None:
             return v
-        # Basic date validation - you can make this more sophisticated
-        date_pattern = r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}'
-        if re.match(date_pattern, str(v)):
-            return v
-        return v
+        
+        return str(v).strip()
     
     @validator('time_pronounced_dead')
     def validate_time_format(cls, v):
