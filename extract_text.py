@@ -90,7 +90,7 @@ class DeathCertificateDetails(BaseModel):
 def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
     """Use LLM to extract specific details from death certificate text with Pydantic validation"""
     try:
-        # Create a comprehensive prompt for extracting all information
+        
         prompt = f"""
         You are an expert at extracting information from death certificates and probate documents. 
         Please extract the following specific details from the given text:
@@ -194,6 +194,8 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
 
         # Parse the JSON response
         result = response.choices[0].message.content.strip()
+        
+        
         
         # Clean up the response if it has markdown formatting
         if result.startswith("```json"):

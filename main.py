@@ -6,14 +6,7 @@ from docx import Document
 from pdf2image import convert_from_path
 from openai import OpenAI 
 import base64
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-import shutil
-from langchain.chains import LLMChain
-import re
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageFilter
 import cv2

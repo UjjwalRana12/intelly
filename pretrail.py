@@ -5,9 +5,9 @@ form_questions_for_pretrail = [
                 "Petitioner's Date of Birth",
                 "Relationship to the Decedent",
                 "Decedent's Full Name",
-                "Decedent's Date of Birth",
+                "Date of Birth",
                 "Date of Death",
-                "What was the residence address of decedent at the time of death?",
+                "location of death",
                 "County",
                 "Last 4 Digits of the Social Security Number",
                 "What is the driver's license number or state-issued ID number?",
@@ -31,3 +31,76 @@ form_questions_for_pretrail = [
                 "Describe the Real Property or Business Interest",
                 "What is the mailing address or address of informant?"
             ]
+
+
+form_data_structure_for_pretrail = {
+    "petitioner_full_name": "Petitioner's Full Name",
+    "petitioner_address": "Address", 
+    "petitioner_phone_number": "Phone Number",
+    "petitioner_date_of_birth": "Petitioner's Date of Birth",
+    "petitioner_relationship_to_decedent": "Relationship to the Decedent",
+    "decedent_full_name": "Decedent's Full Name",
+    "date_of_birth": "Decedent's Date of Birth", 
+    "date_of_death": "Date of Death",
+    "location_of_death": "location of death",
+    "county": "County",
+    "last_4_digits_ssn": "Last 4 Digits of the Social Security Number",
+    "drivers_license_number": "What is the driver's license number or state-issued ID number?",
+    "passport_number": "Passport Number",
+    "other_identifying_details": "Are There Any Other Identifying Details to Provide?",
+    "estimated_value_real_estate": "Estimated Value of the Decedent's Real Estate?",
+    "estimated_value_personal_estate": "Estimated Value of the Personal Estate (Other Assets)",
+    "time_of_death": "Time of Death",
+    "application_previously_filed": "Was an application previously filed, and was a personal representative appointed informally?",
+    "personal_representative_previously_appointed": "Has a personal representative been previously appointed?",
+    "representative_full_name": "Representative's Full Name",
+    "representative_relationship_to_decedent": "Relationship to the Decedent",
+    "representative_address": "Address",
+    "representative_city_state_zip": "The personal representative's city, state, zip?",
+    "date_of_decedent_will": "Date of Decedent's Will",
+    "date_of_decedent_codicil": "Date of Decedent's Will or Codicil",
+    "will_and_codicils_offered_for_probate": "Is/are the will and codicils offered for probate?",
+    "authenticated_copy_of_will_and_codicil": "Is there any authenticated copy of the will and codicil?",
+    "type_of_fiduciary": "What is the type of fiduciary?",
+    "period_of_fiduciary_service": "Period of Fiduciary Service",
+    "description_of_real_property_or_business_interest": "Describe the Real Property or Business Interest",
+    "mailing_address_of_informant": "What is the mailing address or address of informant?"
+}
+
+# If you still need the questions as a list for display purposes
+form_questions_for_pretrail = list(form_data_structure_for_pretrail.values())
+
+# Template for the JSON extraction format
+extraction_template = {
+    "petitioner_full_name": None,
+    "petitioner_address": None,
+    "petitioner_phone_number": None,
+    "petitioner_date_of_birth": None,
+    "petitioner_relationship_to_decedent": None,
+    "decedent_full_name": None,
+    "date_of_birth": None,
+    "date_of_death": None,
+    "location_of_death": None,
+    "county": None,
+    "last_4_digits_ssn": None,
+    "drivers_license_number": None,
+    "passport_number": None,
+    "other_identifying_details": None,
+    "time_of_death": None,
+    "estimated_value_real_estate": None,
+    "estimated_value_personal_estate": None,
+    "application_previously_filed": None,
+    "personal_representative_previously_appointed": None,
+    "representative_full_name": None,
+    "representative_relationship_to_decedent": None,
+    "representative_address": None,
+    "representative_city_state_zip": None,
+    "date_of_decedent_will": None,
+    "date_of_decedent_codicil": None,
+    "will_and_codicils_offered_for_probate": None,
+    "authenticated_copy_of_will_and_codicil": None,
+    "type_of_fiduciary": None,
+    "period_of_fiduciary_service": None,
+    "description_of_real_property_or_business_interest": None,
+    "mailing_address_of_informant": None
+}
