@@ -17,33 +17,67 @@ if not api_key:
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class DeathCertificateDetails(BaseModel):
-    """Pydantic model for death certificate information"""
-    decedent_name: Optional[str] = Field(None, description="Full name of the deceased person")
-    date_of_birth: Optional[str] = Field(None, description="Date of birth ")
-    date_of_death: Optional[str] = Field(None, description="Date of death ")
+    """Pydantic model for comprehensive death certificate and probate information"""
+    
+    petitioner_full_name: Optional[str] = Field(None, description="Petitioner's full name")
+    petitioner_address: Optional[str] = Field(None, description="Petitioner's address")
+    petitioner_phone_number: Optional[str] = Field(None, description="Petitioner's phone number")
+    petitioner_date_of_birth: Optional[str] = Field(None, description="Petitioner's date of birth")
+    petitioner_relationship_to_decedent: Optional[str] = Field(None, description="Petitioner's relationship to the decedent")
+    
+    
+    decedent_full_name: Optional[str] = Field(None, description="Full name of the deceased person")
+    date_of_birth: Optional[str] = Field(None, description="Date of birth")
+    date_of_death: Optional[str] = Field(None, description="Date of death")
     location_of_death: Optional[str] = Field(None, description="Place where death occurred")
     county: Optional[str] = Field(None, description="County where death occurred")
-    social_security_number: Optional[str] = Field(None, description="Social Security Number")
-    time_pronounced_dead: Optional[str] = Field(None, description="Time when death was pronounced")
+    last_4_digits_ssn: Optional[str] = Field(None, description="Last 4 digits of Social Security Number")
+    drivers_license_number: Optional[str] = Field(None, description="Driver's License Number or State-Issued ID Number")
+    passport_number: Optional[str] = Field(None, description="Passport Number")
+    other_identifying_details: Optional[str] = Field(None, description="Other identifying details")
+    time_of_death: Optional[str] = Field(None, description="Time when death occurred")
     
-    @validator('social_security_number')
-    def validate_ssn(cls, v):
+    
+    estimated_value_real_estate: Optional[str] = Field(None, description="Estimated value of the decedent's real estate")
+    estimated_value_personal_estate: Optional[str] = Field(None, description="Estimated value of personal estate (other assets)")
+    
+    
+    application_previously_filed: Optional[str] = Field(None, description="Was an application previously filed, and was a personal representative appointed informally?")
+    personal_representative_previously_appointed: Optional[str] = Field(None, description="Has a personal representative been previously appointed?")
+    representative_full_name: Optional[str] = Field(None, description="Representative's full name")
+    representative_relationship_to_decedent: Optional[str] = Field(None, description="Representative's relationship to the decedent")
+    representative_address: Optional[str] = Field(None, description="Representative's address")
+    representative_city_state_zip: Optional[str] = Field(None, description="Representative's city, state, zip")
+    
+    
+    date_of_decedent_will: Optional[str] = Field(None, description="Date of decedent's will")
+    date_of_decedent_codicil: Optional[str] = Field(None, description="Date of decedent's codicil")
+    will_and_codicils_offered_for_probate: Optional[str] = Field(None, description="Is/are the will and codicils offered for probate?")
+    authenticated_copy_of_will_and_codicil: Optional[str] = Field(None, description="Is there any authenticated copy of the will and codicil?")
+    
+    
+    type_of_fiduciary: Optional[str] = Field(None, description="Type of fiduciary")
+    period_of_fiduciary_service: Optional[str] = Field(None, description="Period of fiduciary service")
+    description_of_real_property_or_business_interest: Optional[str] = Field(None, description="Description of real property or business interest")
+    mailing_address_of_informant: Optional[str] = Field(None, description="Mailing address of informant")
+    
+    @validator('last_4_digits_ssn')
+    def validate_last_4_ssn(cls, v):
         if v is None:
             return v
-        # Remove any formatting and validate SSN pattern
+        # Extract only digits and take last 4
         cleaned_ssn = re.sub(r'[^\d]', '', str(v))
-        if len(cleaned_ssn) == 9:
-            return f"{cleaned_ssn[:3]}-{cleaned_ssn[3:5]}-{cleaned_ssn[5:]}"
+        if len(cleaned_ssn) >= 4:
+            return cleaned_ssn[-4:]
         return v
     
-    @validator('date_of_birth', 'date_of_death')
+    @validator('date_of_birth', 'date_of_death', 'petitioner_date_of_birth', 'date_of_decedent_will', 'date_of_decedent_codicil')
     def validate_date_format(cls, v):
         if v is None:
             return v
-        
         return str(v).strip()
     
-    @validator('time_pronounced_dead')
+    @validator('time_of_death')
     def validate_time_format(cls, v):
         if v is None:
             return v
@@ -56,31 +90,90 @@ class DeathCertificateDetails(BaseModel):
 def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
     """Use LLM to extract specific details from death certificate text with Pydantic validation"""
     try:
-        # Create a prompt for extracting specific information
+        # Create a comprehensive prompt for extracting all information
         prompt = f"""
-        You are an expert at extracting information from death certificates. 
+        You are an expert at extracting information from death certificates and probate documents. 
         Please extract the following specific details from the given text:
 
-        1. Decedent's name (full name of the deceased)
-        2. Date of birth 
-        3. Date of death 
-        4. Location of death (Just Return What is Written in the Document")
-        5. County (county where death occurred)
-        6. Social security number 
-        7. Time pronounced dead 
+        PETITIONER INFORMATION:
+        1. Petitioner's Full Name
+        2. Petitioner's Address
+        3. Petitioner's Phone Number
+        4. Petitioner's Date of Birth
+        5. Petitioner's Relationship to the Decedent
+
+        DECEDENT INFORMATION:
+        6. Decedent's Full Name (full name of the deceased)
+        7. Date of Birth
+        8. Date of Death
+        9. Location of Death (Just Return What is Written in the Document)
+        10. County (county where death occurred)
+        11. Last 4 Digits of the Social Security Number
+        12. Driver's License Number or State-Issued ID Number
+        13. Passport Number
+        14. Other Identifying Details
+        15. Time of Death
+
+        ESTATE INFORMATION:
+        16. Estimated Value of the Decedent's Real Estate
+        17. Estimated Value of the Personal Estate (Other Assets)
+
+        PREVIOUS APPLICATIONS AND REPRESENTATIVES:
+        18. Was an application previously filed, and was a personal representative appointed informally?
+        19. Has a personal representative been previously appointed?
+        20. Representative's Full Name
+        21. Representative's Relationship to the Decedent
+        22. Representative's Address
+        23. Representative's City, State, Zip
+
+        WILL AND CODICIL INFORMATION:
+        24. Date of Decedent's Will
+        25. Date of Decedent's Codicil
+        26. Is/are the will and codicils offered for probate?
+        27. Is there any authenticated copy of the will and codicil?
+
+        FIDUCIARY INFORMATION:
+        28. Type of Fiduciary
+        29. Period of Fiduciary Service
+        30. Description of Real Property or Business Interest
+        31. Mailing Address of Informant
 
         Text to analyze:
         {text}
 
         Please respond in the following JSON format:
         {{
-            "decedent_name": "extracted name or null",
-            "date_of_birth": "extracted date or null", 
+            "petitioner_full_name": "extracted name or null",
+            "petitioner_address": "extracted address or null",
+            "petitioner_phone_number": "extracted phone or null",
+            "petitioner_date_of_birth": "extracted date or null",
+            "petitioner_relationship_to_decedent": "extracted relationship or null",
+            "decedent_full_name": "extracted name or null",
+            "date_of_birth": "extracted date or null",
             "date_of_death": "extracted date or null",
             "location_of_death": "extracted location or null",
             "county": "extracted county or null",
-            "social_security_number": "extracted SSN or null",
-            "time_pronounced_dead": "extracted time or null"
+            "last_4_digits_ssn": "extracted last 4 digits or null",
+            "drivers_license_number": "extracted license number or null",
+            "passport_number": "extracted passport number or null",
+            "other_identifying_details": "extracted details or null",
+            "time_of_death": "extracted time or null",
+            "estimated_value_real_estate": "extracted value or null",
+            "estimated_value_personal_estate": "extracted value or null",
+            "application_previously_filed": "extracted answer or null",
+            "personal_representative_previously_appointed": "extracted answer or null",
+            "representative_full_name": "extracted name or null",
+            "representative_relationship_to_decedent": "extracted relationship or null",
+            "representative_address": "extracted address or null",
+            "representative_city_state_zip": "extracted city state zip or null",
+            "date_of_decedent_will": "extracted date or null",
+            "date_of_decedent_codicil": "extracted date or null",
+            "will_and_codicils_offered_for_probate": "extracted answer or null",
+            "authenticated_copy_of_will_and_codicil": "extracted answer or null",
+            "type_of_fiduciary": "extracted type or null",
+            "period_of_fiduciary_service": "extracted period or null",
+            "description_of_real_property_or_business_interest": "extracted description or null",
+            "mailing_address_of_informant": "extracted address or null"
         }}
 
         If any information is not found, use null. Only return the JSON, no additional text.
@@ -95,7 +188,7 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
                     "content": prompt
                 }
             ],
-            max_tokens=1000,
+            max_tokens=2000,
             temperature=0,
         )
 
@@ -110,7 +203,7 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         raw_data = json.loads(result)
         details = DeathCertificateDetails(**raw_data)
         
-        logging.info("Successfully extracted and validated death certificate details")
+        logging.info("Successfully extracted and validated comprehensive details")
         return details
 
     except json.JSONDecodeError as e:
@@ -122,18 +215,51 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
 
 def print_extracted_details(details: DeathCertificateDetails):
     """Print the extracted details in a formatted way"""
-    print(f"\n{'='*50}")
-    print("EXTRACTED DEATH CERTIFICATE DETAILS")
-    print(f"{'='*50}")
+    print(f"\n{'='*60}")
+    print("EXTRACTED COMPREHENSIVE DETAILS")
+    print(f"{'='*60}")
     
     # Convert Pydantic model to dict for easy iteration
     details_dict = details.dict()
     
-    for key, value in details_dict.items():
-        formatted_key = key.replace("_", " ").title()
-        print(f"{formatted_key:<25}: {value or 'Not found'}")
+    # Group fields for better display
+    sections = {
+        "PETITIONER INFORMATION": [
+            "petitioner_full_name", "petitioner_address", "petitioner_phone_number",
+            "petitioner_date_of_birth", "petitioner_relationship_to_decedent"
+        ],
+        "DECEDENT INFORMATION": [
+            "decedent_full_name", "date_of_birth", "date_of_death", "location_of_death",
+            "county", "last_4_digits_ssn", "drivers_license_number", "passport_number",
+            "other_identifying_details", "time_of_death"
+        ],
+        "ESTATE INFORMATION": [
+            "estimated_value_real_estate", "estimated_value_personal_estate"
+        ],
+        "REPRESENTATIVES": [
+            "application_previously_filed", "personal_representative_previously_appointed",
+            "representative_full_name", "representative_relationship_to_decedent",
+            "representative_address", "representative_city_state_zip"
+        ],
+        "WILL AND CODICIL": [
+            "date_of_decedent_will", "date_of_decedent_codicil",
+            "will_and_codicils_offered_for_probate", "authenticated_copy_of_will_and_codicil"
+        ],
+        "FIDUCIARY INFORMATION": [
+            "type_of_fiduciary", "period_of_fiduciary_service",
+            "description_of_real_property_or_business_interest", "mailing_address_of_informant"
+        ]
+    }
     
-    print(f"{'='*50}")
+    for section_name, fields in sections.items():
+        print(f"\n{section_name}:")
+        print("-" * len(section_name))
+        for field in fields:
+            if field in details_dict:
+                formatted_key = field.replace("_", " ").title()
+                print(f"{formatted_key:<40}: {details_dict[field] or 'Not found'}")
+    
+    print(f"\n{'='*60}")
     
     # Show validation errors if any
     try:

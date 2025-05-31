@@ -199,6 +199,6 @@ def process_death_certificate(image_path):
 # Example usage
 if __name__ == "__main__":
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\JULRUA11268 - Wriska Louis - Death Certificate (1)_page_1_rotated.png"
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\will copy and death certificate 1_page_2.png"
     process_death_certificate(image_path)
 

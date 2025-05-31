@@ -6,14 +6,14 @@ import logging
 def pdf_to_images_with_rotation(pdf_path, output_dir=None, dpi=400, poppler_path=None):
     
     try:
-        # Set default output directory if not provided
+        
         if output_dir is None:
             output_dir = os.path.dirname(pdf_path)
         
-        # Create output directory if it doesn't exist
+        
         os.makedirs(output_dir, exist_ok=True)
         
-        # Convert PDF pages to images
+        
         if poppler_path:
             pages = convert_from_path(pdf_path, poppler_path=poppler_path, dpi=dpi)
         else:
@@ -43,17 +43,9 @@ def pdf_to_images_with_rotation(pdf_path, output_dir=None, dpi=400, poppler_path
 
 
 def correct_rotation_to_upright(image):
-    """
-    Corrects the rotation of an image to make it upright using Tesseract OSD.
     
-    Args:
-        image (PIL.Image): PIL Image object
-    
-    Returns:
-        PIL.Image: Rotated image
-    """
     try:
-        # Get orientation and script detection from Tesseract
+        
         osd = pytesseract.image_to_osd(image)
         rotation_angle = int(osd.split("Rotate:")[1].split("\n")[0].strip())
         
@@ -71,10 +63,9 @@ def correct_rotation_to_upright(image):
 # Example usage:
 if __name__ == "__main__":
     
-    pdf_file = r"pdfs\JULRUA10930_-_Redmond__Glyice_-_Death_Certificate__compressed.pdf"
+    pdf_file = r"C:\Users\HP\OneDrive\Desktop\test_ocr\pdfs\will copy and death certificate 1.pdf"
     
     
-    # Convert PDF to images with rotation correction
     image_paths = pdf_to_images_with_rotation(
         pdf_path=pdf_file,
         output_dir="output_images_by_pdfs",
