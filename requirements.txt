@@ -38,3 +38,6 @@ pydantic
    opencv-python
    numpy
    python-docx
+    pdf2image 
+    pytesseract 
+    pillow

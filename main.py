@@ -166,14 +166,20 @@ def process_death_certificate(image_path):
         
         print(" Step 4: Saving results...")
         
-        complete_filename = f"{base_name}_complete.txt"
+        # Create output folder if it doesn't exist
+        output_folder = "extracted_results"
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        # Save complete results with structured details
+        complete_filename = os.path.join(output_folder, f"{base_name}_complete.txt")
         save_extracted_details(details, complete_filename, result)
-        
+
         # Save raw text only
-        raw_filename = f"{base_name}_raw.txt"
+        raw_filename = os.path.join(output_folder, f"{base_name}_raw.txt")
         with open(raw_filename, "w", encoding="utf-8") as f:
             f.write(result)
-        
+
         # Check for enhanced image
         enhanced_path = f"{os.path.splitext(image_path)[0]}_preprocessed{os.path.splitext(image_path)[1]}"
         
@@ -192,17 +198,7 @@ def process_death_certificate(image_path):
 
 # Example usage
 if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('death_certificate_processing.log'),
-            logging.StreamHandler()
-        ]
-    )
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\beverly jean.jpg"
-    
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\JULRUA11268 - Wriska Louis - Death Certificate (1)_page_1_rotated.png"
     process_death_certificate(image_path)
 
