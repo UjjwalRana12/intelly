@@ -1,0 +1,89 @@
+2025-06-03 09:41:36,092 - INFO - OCR applied successfully using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\images\DC_preprocessed_preprocessed.jpg
+2025-06-03 09:41:36,092 - INFO - Extracted text: ```
+STATE OF MICHIGAN
+CERTIFICATION OF VITAL RECORD
+
+COUNTY OF OAKLAND
+STATE OF MICHIGAN
+
+STATE OF MICHIGAN
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+CERTIFICATE OF DEATH
+
+065217
+STATE FILE NUMBER
+
+1. DECEDENT'S NAME (First, Middle, Last)
+John Edgar Alford Jr.
+
+2. DATE OF BIRTH
+August 05, 1971
+
+3. SEX
+Male
+
+4. DATE OF DEATH
+August 26, 2024
+
+5. NAME AT BIRTH OR OTHER NAME USED FOR PERSONAL BUSINESS
+6a. AGE- Last Birthday
+Years
+53
+
+6b. UNDER 1 YEAR
+MONTHS
+DAYS
+HOURS
+MINUTES
+
+7a. LOCATION OF DEATH
+26691 Huntington Road 48070
+
+7b. CITY, VILLAGE OR TOWNSHIP OF DEATH
+Huntington Woods
+
+7c. COUNTY OF DEATH
+Oakland
+
+8a. CURRENT RESIDENCE
+Michigan
+
+8b. COUNTY
+Oakland
+
+8c. LOCALITY
+Huntington Woods
+
+8d. STREET AND NUMBER
+26691 Huntington Road
+
+8e. ZIP CODE
+48070
+
+9. BIRTH PLACE
+Detroit, Michigan
+
+10. SOCIAL SECURITY NUMBER
+364-98-8976
+
+11. DECEDENT'S EDUCATION
+High school graduate
+
+12. RACE
+White
+
+13a. ANCESTRY
+English
+
+13b. HISPANIC ORIGIN
+No
+
+14. EVER IN THE U.S. ARMED FORCES?
+No
+
+15. USUAL OCCUP
+2025-06-03 09:41:36,463 - INFO - error_code=None error_message="This model's maximum context length is 4097 tokens, however you requested 4154 tokens (2154 in your prompt; 2000 for the completion). Please reduce your prompt; or completion length." error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2025-06-03 09:41:36,464 - ERROR - Error extracting details with LLM: This model's maximum context length is 4097 tokens, however you requested 4154 tokens (2154 in your prompt; 2000 for the completion). Please reduce your prompt; or completion length.
+2025-06-03 09:48:49,632 - INFO - error_code=None error_message='Invalid content type. image_url is only supported by certain models.' error_param=messages.[0].content.[1].type error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2025-06-03 09:48:49,634 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\images\DC_preprocessed_preprocessed.jpg
+2025-06-03 09:48:49,634 - ERROR - Error details: Invalid content type. image_url is only supported by certain models.

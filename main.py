@@ -4,9 +4,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from docx import Document
 from pdf2image import convert_from_path
-from openai import OpenAI 
 import base64
-
 from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageFilter
 import cv2
@@ -14,17 +12,58 @@ import numpy as np
 
 from extract_text import extract_death_certificate_details, print_extracted_details, save_extracted_details
 
-load_dotenv()  
+import openai
+load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set")
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  
+openai.api_key = api_key
 
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
+
+def image_to_text(image_path):
+    try:
+        base64_img = f"data:image/png;base64,{encode_image(image_path)}"
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text", 
+                            "text": """Extract ALL text from this image with high accuracy. 
+                            Please:
+                            - Preserve original formatting, line breaks, and spacing
+                            - Include all text, even if partially visible or unclear
+                            - Maintain the structure of tables, lists, and paragraphs
+                            - If text is unclear, provide your best interpretation
+                            - Do not add explanations, just return the extracted text"""
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": base64_img, "detail": "high"},
+                        },
+                    ],
+                }
+            ],
+            max_tokens=4000,
+            temperature=0,
+        )
+
+        plain_text_content = response.choices[0].message.content
+        logging.info("OCR applied successfully using openai in image: %s", image_path)
+        logging.info("Extracted text: %s", plain_text_content[:1000])
+        return plain_text_content
+    except Exception as e:
+        logging.error("Error in OCR using openai in image: %s", image_path)
+        logging.error("Error details: %s", e)
+        return "No text extracted from image"
 
 def preprocess_image(image_path):
     """Preprocess image to improve OCR accuracy"""
@@ -62,46 +101,6 @@ def preprocess_image(image_path):
     cv2.imwrite(preprocessed_path, thresh)
     
     return preprocessed_path
-
-def image_to_text(image_path):
-    try:
-        base64_img = f"data:image/png;base64,{encode_image(image_path)}"
-
-        # Enhanced prompt for better OCR
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text", 
-                            "text": """Extract ALL text from this image with high accuracy. 
-                            Please:
-                            - Preserve original formatting, line breaks, and spacing
-                            - Include all text, even if partially visible or unclear
-                            - Maintain the structure of tables, lists, and paragraphs
-                            - If text is unclear, provide your best interpretation
-                            - Do not add explanations, just return the extracted text"""
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": base64_img, "detail": "high"},
-                        },
-                    ],
-                }
-            ],
-            max_tokens=4000,
-            temperature=0,
-        )
-
-        plain_text_content = response.choices[0].message.content
-        logging.info("OCR applied successfully using openai in image: %s", image_path)
-        return plain_text_content
-    except Exception as e:
-        logging.error("Error in OCR using openai in image: %s", image_path)
-        logging.error("Error details: %s", e)
-        return "No text extracted from image"
 
 def image_to_text_enhanced(image_path):
     """Enhanced OCR with preprocessing"""
@@ -192,6 +191,6 @@ def process_death_certificate(image_path):
 # Example usage
 if __name__ == "__main__":
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\will copy and death certificate 1_page_2.png"
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\images\DC_preprocessed.jpg"
     process_death_certificate(image_path)
 

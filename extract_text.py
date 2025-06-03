@@ -4,17 +4,21 @@ import json
 import re
 from typing import Optional
 from pydantic import BaseModel, Field, validator
-from openai import OpenAI
+from langchain.llms import OpenAI
 from dotenv import load_dotenv
 
-# Initialize OpenAI client
+# Initialize environment
 load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set")
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+llm = OpenAI(
+    openai_api_key=api_key,
+    temperature=0,
+    max_tokens=1500
+)
 
 class DeathCertificateDetails(BaseModel):
     """Pydantic model for comprehensive death certificate and probate information"""
@@ -95,48 +99,48 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         You are an expert at extracting information from death certificates and probate documents. 
         Please extract the following specific details from the given text:
 
-        PETITIONER INFORMATION:
-        1. Petitioner's Full Name
-        2. Petitioner's Address
-        3. Petitioner's Phone Number
-        4. Petitioner's Date of Birth
-        5. Petitioner's Relationship to the Decedent
+        # PETITIONER INFORMATION:
+        # 1. Petitioner's Full Name
+        # 2. Petitioner's Address
+        # 3. Petitioner's Phone Number
+        # 4. Petitioner's Date of Birth
+        # 5. Petitioner's Relationship to the Decedent
 
-        DECEDENT INFORMATION:
-        6. Decedent's Full Name (full name of the deceased)
-        7. Date of Birth
-        8. Date of Death
-        9. Location of Death (Just Return What is Written in the Document)
-        10. County (county where death occurred)
-        11. Last 4 Digits of the Social Security Number
-        12. Driver's License Number or State-Issued ID Number
-        13. Passport Number
-        14. Other Identifying Details
-        15. Time of Death
+        # DECEDENT INFORMATION:
+        # 6. Decedent's Full Name (full name of the deceased)
+        # 7. Date of Birth
+        # 8. Date of Death
+        # 9. Location of Death (Just Return What is Written in the Document)
+        # 10. County (county where death occurred)
+        # 11. Last 4 Digits of the Social Security Number
+        # 12. Driver's License Number or State-Issued ID Number
+        # 13. Passport Number
+        # 14. Other Identifying Details
+        # 15. Time of Death
 
-        ESTATE INFORMATION:
-        16. Estimated Value of the Decedent's Real Estate
-        17. Estimated Value of the Personal Estate (Other Assets)
+        # ESTATE INFORMATION:
+        # 16. Estimated Value of the Decedent's Real Estate
+        # 17. Estimated Value of the Personal Estate (Other Assets)
 
-        PREVIOUS APPLICATIONS AND REPRESENTATIVES:
-        18. Was an application previously filed, and was a personal representative appointed informally?
-        19. Has a personal representative been previously appointed?
-        20. Representative's Full Name
-        21. Representative's Relationship to the Decedent
-        22. Representative's Address
-        23. Representative's City, State, Zip
+        # PREVIOUS APPLICATIONS AND REPRESENTATIVES:
+        # 18. Was an application previously filed, and was a personal representative appointed informally?
+        # 19. Has a personal representative been previously appointed?
+        # 20. Representative's Full Name
+        # 21. Representative's Relationship to the Decedent
+        # 22. Representative's Address
+        # 23. Representative's City, State, Zip
 
-        WILL AND CODICIL INFORMATION:
-        24. Date of Decedent's Will
-        25. Date of Decedent's Codicil
-        26. Is/are the will and codicils offered for probate?
-        27. Is there any authenticated copy of the will and codicil?
+        # WILL AND CODICIL INFORMATION:
+        # 24. Date of Decedent's Will
+        # 25. Date of Decedent's Codicil
+        # 26. Is/are the will and codicils offered for probate?
+        # 27. Is there any authenticated copy of the will and codicil?
 
-        FIDUCIARY INFORMATION:
-        28. Type of Fiduciary
-        29. Period of Fiduciary Service
-        30. Description of Real Property or Business Interest
-        31. Mailing Address of Informant
+        # FIDUCIARY INFORMATION:
+        # 28. Type of Fiduciary
+        # 29. Period of Fiduciary Service
+        # 30. Description of Real Property or Business Interest
+        # 31. Mailing Address of Informant
 
         Text to analyze:
         {text}
@@ -180,20 +184,10 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         Be very careful to extract exact information as it appears in the document.
         """
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            max_tokens=2000,
-            temperature=0,
-        )
+        response = llm(prompt)
 
         # Parse the JSON response
-        result = response.choices[0].message.content.strip()
+        result = response.strip()
         
         
         

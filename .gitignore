@@ -3,3 +3,4 @@ venv
 extracted_results
 output_images_by_pdfs
 new_venv
+prod_venv
