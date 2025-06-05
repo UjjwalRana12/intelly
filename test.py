@@ -1,152 +1,92 @@
-def image_to_text(image_path):
-    try:
- 
-        # image_url = base_url + "/" + image_path.replace("\\", "/")
- 
-        base64_img = f"data:image/png;base64,{encode_image(image_path)}"
-       
-   
-        # Send the image as base64 in a chat completion request
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo",  # Specify the model
-             messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text", 
-                            "text": """Extract ALL text from this image with high accuracy. 
-                            Please:
-                            - Preserve original formatting, line breaks, and spacing
-                            - Include all text, even if partially visible or unclear
-                            - Maintain the structure of tables, lists, and paragraphs
-                            - If text is unclear, provide your best interpretation
-                            - Do not add explanations, just return the extracted text"""
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": base64_img, "detail": "high"},
-                        },
-                    ],
-                }
-            ],
-            max_tokens=4000,
-            temperature=0,
-        )
-   
-        # Extract and return the plain text content from the response
-        plain_text_content = response["choices"][0]["message"]["content"]
-        print(plain_text_content)
-        logging.info("plain_text_content extracted :%s", plain_text_content)
-        logging.info("OCR applied successfully using openai in image :%s", image_path)
-        return plain_text_content
-    except Exception as e:
-        logging.info("Error in ocr for using openai in image :%s", image_path)
-        logging.info("Error in ocr for using openai :%s", e)
-        return "No text"
- 
- 
-form_questions_for_pretrail = [
-    "Petitioner's Full Name",
-    "Address",
-    "Phone Number",
-    "Petitioner's Date of Birth",
-    "Petitioner's Relationship to the Decedent",
-    "Decedent's Full Name",
-    "Date of Birth",
-    "Date of Death",
-    "Location of Death",
-    "County",
-    "Last 4 Digits of the Social Security Number",
-    "Driver's License Number or State-Issued ID Number",
-    "Passport Number",
-    "Other Identifying Details",
-    "Estimated Value of the Decedent's Real Estate",
-    "Estimated Value of the Personal Estate (Other Assets)",
-    "Time of Death",
-    "Was an application previously filed, and was a personal representative appointed informally?",
-    "Has a personal representative been previously appointed?",
-    "Representative's Full Name",
-    "Representative's Relationship to the Decedent",
-    "Representative's Address",
-    "Representative's City, State, Zip",
-    "Date of Decedent's Will",
-    "Date of Decedent's Codicil",
-    "Is/are the will and codicils offered for probate?",
-    "Is there any authenticated copy of the will and codicil?",
-    "Type of Fiduciary",
-    "Period of Fiduciary Service",
-    "Description of Real Property or Business Interest",
-    "Mailing Address of Informant"
-]
- 
-def get_form_ques_data(form_ques, combined_text):
- 
-    try:
-        extraction_prompt = ChatPromptTemplate.from_template(f"""
-            You are an expert in processing Probate Case Documents like Death Certificate or Will. Based on the document text provided, extract:
-            {form_ques}
- 
-            If data is not provided in the text for any question, please generate 'Not provided' only.
-            Document Text:
-            {{text}}
- 
-            Generate the response in the following format:
-            {form_ques[0]}: Value 1
-            {form_ques[1]}: Value 2
- 
-        """)
- 
- 
-        # Create the LLM model instance
-        llm = ChatOpenAI(temperature=0, model='gpt-4o')
- 
-        # Create the LLM chain with the prompt
-        response_chain = LLMChain(llm=llm, prompt=extraction_prompt)
- 
-        # Run the text through the chain and get the response
-        response = response_chain.run({"text": combined_text})
-        logging.info("response:%s", response)
- 
-    except Exception as e:
-        logging.info("error in extracting form questions answer: %s", e)
- 
- 
-    print("generalized patttern match")
-    # Step 6: Generate dynamic patterns for each field
-    try:
-        extracted_info = {}
-        not_matched={}
-        for field in form_ques:
-            #field_name = field.strip().split("(")[0].strip()  # Strip any extra info like (DOB) or (DOD)
-            field_name = field.strip()
-            print(field_name)
-           
-            #logging.info("field names: %s",field_name)
-            #regex_pattern = rf"{field_name}:\s*([^\n]+)"
-            regex_pattern = rf"{re.escape(field_name.split('(')[0].strip())}(?: \(.*?\))?:\s*([^\n]+)"
-           
-            # field_name = field.split('?')[0].strip()  # Remove question mark for label matching
-            # logging.info("field names: %s",field_name)
-            # regex_pattern = rf"{re.escape(field_name)}:\s*([^\n]+)"
-            # Find match for each field in the response
-            match = re.search(regex_pattern, response, re.IGNORECASE)
-            logging.info(f"matched regex:==>{match}")
-            #logging.info("match:%s",  match.group(1).strip())
-            # s = match.group(1).strip()
-            if match :
-                extracted_info[field_name] = match.group(1).strip()
-            else:
-                not_matched[field_name] = "Not Matched"
-                extracted_info[field_name] = ""
-           
- 
- 
-        # Step 7: Print and return the extracted information
-        for field, value in extracted_info.items():
-            print(f"{field}: {value}")
-    except Exception as e:
-        logging.info("error in regex pattern atching : %s", e)
- 
-    return extracted_info,not_matched
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 
+def process_single_page(page_data):
+    """Process a single page and return its text"""
+    i, page, pdf_path = page_data
+    try:
+        # Save each page as an image
+        image_path = f"{pdf_path}_page_{i + 1}.png"
+        page.save(image_path, "PNG")
+
+        #image rotation
+        image_path1 = f"{pdf_path}_page_{i + 1}_rotated.png"
+        rotated_image = correct_rotation_to_upright(page)
+        rotated_image.save(image_path1, "PNG")
+
+        # Use image_to_text function for text extraction
+        print(f"Processing page {i + 1}...")
+        preprocessed_path = preprocess_image(image_path1)
+        logging.info(f"preprocessed_path:{preprocessed_path}")
+        text = image_to_text(preprocessed_path)
+        
+        return i, text  # Return page number and text for ordering
+        
+    except Exception as e:
+        logging.error(f"Error processing page {i + 1}: {e}")
+        return i, ""  # Return empty text on error
+
+def pdf_to_text(pdf_path):
+    """Extracts text from a scanned PDF using image-to-text processing with parallel processing."""
+    logging.info(f"pdf_to_text called with: {pdf_path}")
+    
+    try:
+        # Convert PDF pages to images
+        try:
+            pages = convert_from_path(pdf_path, poppler_path=r"C:\Release-24.08.0-0\poppler-24.08.0\Library\bin", dpi=400)
+            
+            # Prepare data for parallel processing
+            page_data = [(i, page, pdf_path) for i, page in enumerate(pages)]
+            
+            # Process pages in parallel
+            all_text = [None] * len(pages)  # Initialize list with correct size
+            
+            # Use ThreadPoolExecutor for parallel processing
+            max_workers = min(4, len(pages))  # Limit to 4 threads or number of pages
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all tasks
+                future_to_page = {executor.submit(process_single_page, data): data[0] for data in page_data}
+                
+                # Collect results as they complete
+                for future in as_completed(future_to_page):
+                    try:
+                        page_index, text = future.result()
+                        all_text[page_index] = text  # Store text in correct order
+                        logging.info(f"Completed processing page {page_index + 1}")
+                    except Exception as e:
+                        page_index = future_to_page[future]
+                        logging.error(f"Page {page_index + 1} generated an exception: {e}")
+                        all_text[page_index] = ""  # Set empty text for failed pages
+
+            # Filter out None values and combine all text
+            all_text = [text for text in all_text if text is not None]
+            combined_text = "\n\n".join(all_text)
+            logging.info("Combined text from all pages completed")
+            logging.info("image to text:%s", combined_text[:1000])  # Log first 1000 chars
+
+            # Call extraction functions ONCE on the combined text
+            logging.info("Starting extraction process...")
+            details = extract_death_certificate_details(combined_text)
+            logging.info(f"extract_death_certificate_details details:{details}")
+            print("Step 3: Displaying extracted details...")
+            print_extracted_details(details)
+            
+            return details
+
+        except Exception as e:
+            logging.error("Error in PDF to image conversion:%s", e)
+            # Fallback to direct OCR
+            combined_text = image_to_text(pdf_path)
+            logging.info("Fallback image to text:%s", combined_text)
+            
+            if combined_text and combined_text != "No text":
+                details = extract_death_certificate_details(combined_text)
+                logging.info(f"Fallback extract_death_certificate_details details:{details}")
+                print_extracted_details(details)
+                return details
+            else:
+                return DeathCertificateDetails()  # Return empty details object
+
+    except Exception as e:
+        logging.error("Error in pdf to text function:%s", e)
+        return DeathCertificateDetails()  # Return empty details object

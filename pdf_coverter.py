@@ -2,8 +2,10 @@ import os
 from pdf2image import convert_from_path
 import pytesseract
 import logging
+from PIL import Image
+Image.MAX_IMAGE_PIXELS = None
 
-def pdf_to_images_with_rotation(pdf_path, output_dir=None, dpi=400, poppler_path=None):
+def pdf_to_images_with_rotation(pdf_path, output_dir=None, dpi=250, poppler_path=None):
     
     try:
         
@@ -63,7 +65,7 @@ def correct_rotation_to_upright(image):
 # Example usage:
 if __name__ == "__main__":
     
-    pdf_file = r"C:\Users\HP\OneDrive\Desktop\test_ocr\pdfs\will copy and death certificate 1.pdf"
+    pdf_file = r"C:\Users\HP\OneDrive\Desktop\test_ocr\pdfs\bruce_alan_data 1.pdf"
     
     
     image_paths = pdf_to_images_with_rotation(

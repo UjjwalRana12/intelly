@@ -188,9 +188,9 @@ def process_death_certificate(image_path):
         logging.error(f"Error processing {image_path}: {e}")
         return False
 
-# Example usage
+
 if __name__ == "__main__":
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\images\Misener.Death_Cert (2) (1).jpeg"
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\bruce_alan_data 1_page_1.png"
     process_death_certificate(image_path)
 

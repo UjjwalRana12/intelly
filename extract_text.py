@@ -36,6 +36,8 @@ class DeathCertificateDetails(BaseModel):
     location_of_death: Optional[str] = Field(None, description="Place where death occurred")
     county: Optional[str] = Field(None, description="County where death occurred")
     last_4_digits_ssn: Optional[str] = Field(None, description="Last 4 digits of Social Security Number")
+    zip_code: Optional[str] = Field(None, description="Zip code of the decedent's last residence")
+
     drivers_license_number: Optional[str] = Field(None, description="Driver's License Number or State-Issued ID Number")
     passport_number: Optional[str] = Field(None, description="Passport Number")
     other_identifying_details: Optional[str] = Field(None, description="Other identifying details")
@@ -59,7 +61,7 @@ class DeathCertificateDetails(BaseModel):
     will_and_codicils_offered_for_probate: Optional[str] = Field(None, description="Is/are the will and codicils offered for probate?")
     authenticated_copy_of_will_and_codicil: Optional[str] = Field(None, description="Is there any authenticated copy of the will and codicil?")
     
-    
+    # acceptance of appointment and fiduciary details
     type_of_fiduciary: Optional[str] = Field(None, description="Type of fiduciary")
     period_of_fiduciary_service: Optional[str] = Field(None, description="Period of fiduciary service")
     description_of_real_property_or_business_interest: Optional[str] = Field(None, description="Description of real property or business interest")
@@ -99,49 +101,6 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         You are an expert at extracting information from death certificates and probate documents. 
         Please extract the following specific details from the given text:
 
-        # PETITIONER INFORMATION:
-        # 1. Petitioner's Full Name
-        # 2. Petitioner's Address
-        # 3. Petitioner's Phone Number
-        # 4. Petitioner's Date of Birth
-        # 5. Petitioner's Relationship to the Decedent
-
-        # DECEDENT INFORMATION:
-        # 6. Decedent's Full Name (full name of the deceased)
-        # 7. Date of Birth
-        # 8. Date of Death
-        # 9. Location of Death (Just Return What is Written in the Document)
-        # 10. County (county where death occurred)
-        # 11. Last 4 Digits of the Social Security Number
-        # 12. Driver's License Number or State-Issued ID Number
-        # 13. Passport Number
-        # 14. Other Identifying Details
-        # 15. Time of Death
-
-        # ESTATE INFORMATION:
-        # 16. Estimated Value of the Decedent's Real Estate
-        # 17. Estimated Value of the Personal Estate (Other Assets)
-
-        # PREVIOUS APPLICATIONS AND REPRESENTATIVES:
-        # 18. Was an application previously filed, and was a personal representative appointed informally?
-        # 19. Has a personal representative been previously appointed?
-        # 20. Representative's Full Name
-        # 21. Representative's Relationship to the Decedent
-        # 22. Representative's Address
-        # 23. Representative's City, State, Zip
-
-        # WILL AND CODICIL INFORMATION:
-        # 24. Date of Decedent's Will
-        # 25. Date of Decedent's Codicil
-        # 26. Is/are the will and codicils offered for probate?
-        # 27. Is there any authenticated copy of the will and codicil?
-
-        # FIDUCIARY INFORMATION:
-        # 28. Type of Fiduciary
-        # 29. Period of Fiduciary Service
-        # 30. Description of Real Property or Business Interest
-        # 31. Mailing Address of Informant
-
         Text to analyze:
         {text}
 
@@ -158,6 +117,7 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
             "location_of_death": "extracted location or null",
             "county": "extracted county or null",
             "last_4_digits_ssn": "extracted last 4 digits or null",
+            "zip_code": "extracted zip code or null",
             "drivers_license_number": "extracted license number or null",
             "passport_number": "extracted passport number or null",
             "other_identifying_details": "extracted details or null",
@@ -215,10 +175,10 @@ def print_extracted_details(details: DeathCertificateDetails):
     print("EXTRACTED COMPREHENSIVE DETAILS")
     print(f"{'='*60}")
     
-    # Convert Pydantic model to dict for easy iteration
+     
     details_dict = details.dict()
     
-    # Group fields for better display
+    
     sections = {
         "PETITIONER INFORMATION": [
             "petitioner_full_name", "petitioner_address", "petitioner_phone_number",
@@ -227,7 +187,7 @@ def print_extracted_details(details: DeathCertificateDetails):
         "DECEDENT INFORMATION": [
             "decedent_full_name", "date_of_birth", "date_of_death", "location_of_death",
             "county", "last_4_digits_ssn", "drivers_license_number", "passport_number",
-            "other_identifying_details", "time_of_death"
+            "other_identifying_details", "time_of_death","zip_code"
         ],
         "ESTATE INFORMATION": [
             "estimated_value_real_estate", "estimated_value_personal_estate"
@@ -257,7 +217,7 @@ def print_extracted_details(details: DeathCertificateDetails):
     
     print(f"\n{'='*60}")
     
-    # Show validation errors if any
+    
     try:
         details.dict()  # This will raise validation errors if any
     except Exception as e:
