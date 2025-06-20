@@ -9,81 +9,53 @@ from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageFilter
 import cv2
 import numpy as np
-# import cv2
-# import numpy as np
-# from PIL import Image, ImageEnhance
-# import os
+from google.cloud import vision
+import io
 
 from extract_text import extract_death_certificate_details, print_extracted_details, save_extracted_details
 
-import openai
 load_dotenv()
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("OPENAI_API_KEY environment variable not set")
-
-openai.api_key = api_key
-
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
-
 def image_to_text(image_path):
+    """Extract text using Google Vision API"""
     try:
-        base64_img = f"data:image/png;base64,{encode_image(image_path)}"
+        # Initialize Google Vision client
+        client = vision.ImageAnnotatorClient()
+        
+        # Load the image into memory
+        with io.open(image_path, "rb") as image_file:
+            content = image_file.read()
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text", 
-                            "text": """You are an expert OCR system specialized in death certificates and legal documents. Extract ALL text from this image with maximum accuracy and consistency.
+        image = vision.Image(content=content)
 
-                            CRITICAL REQUIREMENTS:
-                            - Read every single word, number, date, and character visible in the image
-                            - Preserve exact formatting, line breaks, and spacing as they appear
-                            - Include ALL form fields, labels, values, checkboxes, and annotations
-                            - Capture headers, footers, signatures, stamps, and watermarks
-                            - Maintain table structure and field alignment precisely
-                            - Include partially visible or faded text with your best interpretation
-                            - Process the entire document systematically from top to bottom
-                            - Do not skip any sections, even if they appear empty or unclear
-                            
-                            CONSISTENCY INSTRUCTIONS:
-                            - Use the same text extraction approach every time
-                            - Maintain consistent formatting standards
-                            - Apply consistent interpretation rules for unclear text
-                            
-                            OUTPUT FORMAT:
-                            Return ONLY the extracted text with no explanations, commentary, or metadata.
-                            Preserve the original document structure and formatting exactly."""
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": base64_img, "detail": "high"},
-                        },
-                    ],
-                }
-            ],
-            max_tokens=4000,
-            temperature=0,  # Keep at 0 for consistency
-        )
-
-        plain_text_content = response.choices[0].message.content
-        logging.info("OCR applied successfully using openai in image: %s", image_path)
-        logging.info("Extracted text length: %d", len(plain_text_content))
-        return plain_text_content
+        # Use document_text_detection for better accuracy with documents
+        response = client.document_text_detection(image=image)
+        
+        if response.error.message:
+            raise Exception(f'Google Vision API error: {response.error.message}')
+        
+        # Extract full text
+        if response.full_text_annotation:
+            text_content = response.full_text_annotation.text
+        else:
+            # Fallback to basic text detection
+            texts = response.text_annotations
+            if texts:
+                text_content = texts[0].description
+            else:
+                text_content = ""
+        
+        logging.info("OCR applied successfully using Google Vision API for image: %s", image_path)
+        logging.info("Extracted text length: %d", len(text_content))
+        return text_content
+        
     except Exception as e:
-        logging.error("Error in OCR using openai in image: %s", image_path)
+        logging.error("Error in OCR using Google Vision API for image: %s", image_path)
         logging.error("Error details: %s", e)
         return "No text extracted from image"
 
 def preprocess_image(image_path):
-    """Enhanced preprocessing for more consistent OCR results"""
+    """Lightweight preprocessing - Google Vision API handles most issues"""
     try:
         # Load image
         img = Image.open(image_path)
@@ -92,56 +64,14 @@ def preprocess_image(image_path):
         if img.mode != 'RGB':
             img = img.convert('RGB')
 
-        # Get image dimensions for adaptive processing
-        width, height = img.size
-        
-        # Resize if image is too large (for consistency and performance)
-        max_dimension = 2000
-        if max(width, height) > max_dimension:
-            scale = max_dimension / max(width, height)
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            img = img.resize((new_width, new_height), Image.LANCZOS)
+        # Light enhancement only - Google Vision is smart enough for the rest
+        img = ImageEnhance.Brightness(img).enhance(1.2)   # Slight brightness boost
+        img = ImageEnhance.Contrast(img).enhance(1.3)     # Slight contrast boost
 
-        # Enhanced brightness and contrast with fixed values for consistency
-        img = ImageEnhance.Brightness(img).enhance(1.3)   # Increased brightness
-        img = ImageEnhance.Contrast(img).enhance(1.6)     # Higher contrast for better text clarity
-        img = ImageEnhance.Sharpness(img).enhance(1.4)    # Moderate sharpness
-
-        # Convert to OpenCV format
-        img_array = np.array(img)
-
-        # Convert to grayscale
-        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-
-        # Apply Gaussian blur to reduce noise before denoising
-        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-
-        # More aggressive denoising with consistent parameters
-        denoised = cv2.fastNlMeansDenoising(blurred, h=12, templateWindowSize=7, searchWindowSize=21)
-
-        # Apply morphological operations to clean up text
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-        cleaned = cv2.morphologyEx(denoised, cv2.MORPH_CLOSE, kernel)
-
-        # Use adaptive threshold for more consistent results across different images
-        thresh = cv2.adaptiveThreshold(
-            cleaned, 
-            255, 
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-            cv2.THRESH_BINARY, 
-            15,  # Increased block size for better text handling
-            4    # Increased C value for better threshold
-        )
-
-        # Final morphological operation to connect broken characters
-        final_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
-        final_thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, final_kernel)
-
-        # Save preprocessed image
+        # Save the lightly processed image
         base_name, extension = os.path.splitext(image_path)
         preprocessed_path = f"{base_name}_preprocessed{extension}"
-        cv2.imwrite(preprocessed_path, final_thresh)
+        img.save(preprocessed_path)
 
         return preprocessed_path
         
@@ -150,11 +80,11 @@ def preprocess_image(image_path):
         return image_path
 
 def image_to_text_enhanced(image_path):
-    """Enhanced OCR with validation for consistency"""
+    """Enhanced OCR with Google Vision API and preprocessing"""
     try:
         preprocessed_path = preprocess_image(image_path)
         
-        print("  Extracting text with OpenAI...")
+        print("  Extracting text with Google Vision API...")
         result = image_to_text(preprocessed_path)
         
         # Simple validation - check if result seems reasonable
@@ -170,51 +100,8 @@ def image_to_text_enhanced(image_path):
                 return result
         
     except Exception as e:
-        logging.error(f"Enhanced OCR failed: {e}")
+        logging.error(f"Enhanced Google Vision OCR failed: {e}")
         return "No text extracted from image"
-
-
-# def ocr_image(image_path):
-#     """
-#     Perform OCR on the given image and return the extracted text.
-#     Handles encoding errors gracefully.
-#     """
-#     import pytesseract
-#     from PIL import Image
-#     import re
-
-#     try:
-#         image = Image.open(image_path)
-#     except Exception as e:
-#         logging.error("Failed to open image %s: %s", image_path, e)
-#         return ""
-
-#     try:
-#         # Optional: correct rotation
-#         image = correct_rotation_to_upright(image)
-
-#         custom_config = r'--oem 3 --psm 6'
-#         text = pytesseract.image_to_string(image, config=custom_config)
-#         logging.info("Raw OCR text:\n%s", text)
-
-#         # Handle encoding issues
-#         text = text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
-
-#         # Optional: clean non-ASCII characters
-#         text = re.sub(r'[^\x00-\x7F]+', ' ', text)
-
-      
-
-        
-               
-
-#         logging.info("Processed OCR text:\n%s", text)
-#         return text
-
-#     except Exception as e:
-#         logging.error("OCR failed for %s: %s", image_path, e)
-#         return ""   
-
 
 def process_death_certificate(image_path):
     """Process a single death certificate image and extract details"""
@@ -232,7 +119,7 @@ def process_death_certificate(image_path):
     
     try:
         
-        print(" Step 1:OCR processing...")
+        print(" Step 1: OCR processing...")
         result = image_to_text_enhanced(image_path)
         
         if result == "No text extracted from image":
