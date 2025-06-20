@@ -1,0 +1,8 @@
+2025-06-20 16:45:16,715 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1_preprocessed.png
+2025-06-20 16:45:16,717 - ERROR - Error details: module 'openai' has no attribute 'chat'
+2025-06-20 16:45:16,808 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1.png
+2025-06-20 16:45:16,809 - ERROR - Error details: module 'openai' has no attribute 'chat'
+2025-06-20 16:45:38,655 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1_preprocessed.png
+2025-06-20 16:45:38,655 - ERROR - Error details: module 'openai' has no attribute 'completions'
+2025-06-20 16:45:38,720 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1.png
+2025-06-20 16:45:38,720 - ERROR - Error details: module 'openai' has no attribute 'completions'

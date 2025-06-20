@@ -65,7 +65,7 @@ def correct_rotation_to_upright(image):
 # Example usage:
 if __name__ == "__main__":
     
-    pdf_file = r"C:\Users\HP\OneDrive\Desktop\test_ocr\pdfs\bruce_alan_data 1.pdf"
+    pdf_file = r"C:\Users\HP\OneDrive\Desktop\test_ocr\pdfs\Luvenia_DC 1.pdf"
     
     
     image_paths = pdf_to_images_with_rotation(

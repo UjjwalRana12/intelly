@@ -34,7 +34,7 @@ class DeathCertificateDetails(BaseModel):
     date_of_birth: Optional[str] = Field(None, description="Date of birth")
     date_of_death: Optional[str] = Field(None, description="Date of death")
     location_of_death: Optional[str] = Field(None, description="Place where death occurred")
-    county: Optional[str] = Field(None, description="County where death occurred")
+    county: Optional[str] = Field(None, description="County be precised with instruction there are two fields , county and county of death , extract county only")
     last_4_digits_ssn: Optional[str] = Field(None, description="Last 4 digits of Social Security Number")
     zip_code: Optional[str] = Field(None, description="Zip code of the decedent's last residence")
 
@@ -100,7 +100,13 @@ def extract_death_certificate_details(text: str) -> DeathCertificateDetails:
         prompt = f"""
         You are an expert at extracting information from death certificates and probate documents. 
         Please extract the following specific details from the given text:
-
+        
+        IMPORTANT INSTRUCTIONS:
+        - For "county": Extract ONLY from the field labeled "County" (not "County of Death")
+        - If there are multiple county fields, prioritize the standalone "County" field over "County of Death"
+        - Look for the exact field label "County:" and extract the value that follows it
+        - Ignore any "County of Death" field when extracting county information
+        
         Text to analyze:
         {text}
 
@@ -267,3 +273,9 @@ def save_extracted_details(details: DeathCertificateDetails, filename: str, raw_
 #         save_extracted_details(details, "beverly_details.txt", text)
 #     else:
 #         print("beverly.txt not found. Please run main.py first to extract text from image.")
+
+    # IMPORTANT INSTRUCTIONS:
+    #     - For "county": Extract ONLY from the field labeled "County" (not "County of Death")
+    #     - If there are multiple county fields, prioritize the standalone "County" field over "County of Death"
+    #     - Look for the exact field label "County:" and extract the value that follows it
+    #     - Ignore any "County of Death" field when extracting county information

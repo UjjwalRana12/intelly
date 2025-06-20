@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageFilter
 import cv2
 import numpy as np
+# import cv2
+# import numpy as np
+# from PIL import Image, ImageEnhance
+# import os
 
 from extract_text import extract_death_certificate_details, print_extracted_details, save_extracted_details
 
@@ -37,13 +41,26 @@ def image_to_text(image_path):
                     "content": [
                         {
                             "type": "text", 
-                            "text": """Extract ALL text from this image with high accuracy. 
-                            Please:
-                            - Preserve original formatting, line breaks, and spacing
-                            - Include all text, even if partially visible or unclear
-                            - Maintain the structure of tables, lists, and paragraphs
-                            - If text is unclear, provide your best interpretation
-                            - Do not add explanations, just return the extracted text"""
+                            "text": """You are an expert OCR system specialized in death certificates and legal documents. Extract ALL text from this image with maximum accuracy and consistency.
+
+                            CRITICAL REQUIREMENTS:
+                            - Read every single word, number, date, and character visible in the image
+                            - Preserve exact formatting, line breaks, and spacing as they appear
+                            - Include ALL form fields, labels, values, checkboxes, and annotations
+                            - Capture headers, footers, signatures, stamps, and watermarks
+                            - Maintain table structure and field alignment precisely
+                            - Include partially visible or faded text with your best interpretation
+                            - Process the entire document systematically from top to bottom
+                            - Do not skip any sections, even if they appear empty or unclear
+                            
+                            CONSISTENCY INSTRUCTIONS:
+                            - Use the same text extraction approach every time
+                            - Maintain consistent formatting standards
+                            - Apply consistent interpretation rules for unclear text
+                            
+                            OUTPUT FORMAT:
+                            Return ONLY the extracted text with no explanations, commentary, or metadata.
+                            Preserve the original document structure and formatting exactly."""
                         },
                         {
                             "type": "image_url",
@@ -53,12 +70,12 @@ def image_to_text(image_path):
                 }
             ],
             max_tokens=4000,
-            temperature=0,
+            temperature=0,  # Keep at 0 for consistency
         )
 
         plain_text_content = response.choices[0].message.content
         logging.info("OCR applied successfully using openai in image: %s", image_path)
-        logging.info("Extracted text: %s", plain_text_content[:1000])
+        logging.info("Extracted text length: %d", len(plain_text_content))
         return plain_text_content
     except Exception as e:
         logging.error("Error in OCR using openai in image: %s", image_path)
@@ -66,263 +83,138 @@ def image_to_text(image_path):
         return "No text extracted from image"
 
 def preprocess_image(image_path):
-    """Enhanced preprocessing with noise removal, brightness, and morphological cleanup"""
-    
-    print(f"🔧 Starting enhanced preprocessing: {os.path.basename(image_path)}")
-    
-    # Create preprocessed_images folder for organization
-    preprocessed_folder = "preprocessed_images"
-    if not os.path.exists(preprocessed_folder):
-        os.makedirs(preprocessed_folder)
-    
-    img = Image.open(image_path)
-    print(f"📊 Original image: {img.size}, Mode: {img.mode}")
-    
-    # Convert to RGB if needed
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-        print("✅ Converted to RGB")
-    
-    # Step 1: Brightness enhancement (NEW)
-    enhancer = ImageEnhance.Brightness(img)
-    img = enhancer.enhance(1.3)  # Increase brightness by 30%
-    print("✅ Brightness enhanced (+30%)")
-    
-    # Step 2: Enhanced contrast
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(1.8)  # Increased from 1.5 for better text clarity
-    print("✅ Contrast enhanced (+80%)")
-    
-    # Step 3: Enhanced sharpness
-    enhancer = ImageEnhance.Sharpness(img)
-    img = enhancer.enhance(1.4)  # Increased from 1.2
-    print("✅ Sharpness enhanced (+40%)")
-    
-    # Step 4: Initial noise reduction with median filter (NEW)
-    img = img.filter(ImageFilter.MedianFilter(size=3))
-    print("✅ Initial noise reduction applied")
-    
-    # Convert to numpy array for OpenCV processing
-    img_array = np.array(img)
-    
-    # Convert to BGR for OpenCV
-    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-    
-    # Step 5: Advanced noise reduction with bilateral filter (NEW)
-    # Preserves edges while removing noise
-    denoised = cv2.bilateralFilter(img_bgr, 9, 75, 75)
-    print("✅ Advanced bilateral noise reduction")
-    
-    # Convert to grayscale
-    gray = cv2.cvtColor(denoised, cv2.COLOR_BGR2GRAY)
-    
-    # Step 6: Histogram equalization for better contrast distribution (NEW)
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
-    equalized = clahe.apply(gray)
-    print("✅ Histogram equalization applied")
-    
-    # Step 7: Additional noise reduction with Gaussian blur
-    # Using smaller kernel than before for better text preservation
-    blurred = cv2.GaussianBlur(equalized, (3, 3), 0)
-    print("✅ Gaussian blur noise reduction")
-    
-    # Step 8: Advanced thresholding combination (NEW)
-    # Method 1: Adaptive threshold
-    adaptive_thresh = cv2.adaptiveThreshold(
-        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-    )
-    
-    # Method 2: OTSU threshold
-    _, otsu_thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Combine both thresholding methods for better results
-    combined_thresh = cv2.addWeighted(adaptive_thresh, 0.7, otsu_thresh, 0.3, 0)
-    print("✅ Combined adaptive + OTSU thresholding")
-    
-    # Step 9: Morphological cleanup operations (NEW)
-    # Remove small noise particles
-    kernel_small = np.ones((1,1), np.uint8)
-    opened = cv2.morphologyEx(combined_thresh, cv2.MORPH_OPEN, kernel_small)
-    print("✅ Small noise particles removed")
-    
-    # Fill small gaps in text
-    kernel_medium = np.ones((2,2), np.uint8)
-    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_medium)
-    print("✅ Small gaps in text filled")
-    
-    # Step 10: Remove very small connected components (salt and pepper noise)
-    final_cleaned = remove_small_noise_components(closed, min_area=15)
-    print("✅ Tiny noise components removed")
-    
-    # Step 11: Final smoothing to clean up any remaining artifacts
-    kernel_final = np.ones((1,1), np.uint8)
-    final_result = cv2.morphologyEx(final_cleaned, cv2.MORPH_CLOSE, kernel_final)
-    
-    # Save to organized folder
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-    extension = os.path.splitext(image_path)[1]
-    preprocessed_path = os.path.join(preprocessed_folder, f"{base_name}_enhanced_preprocessed{extension}")
-    
-    cv2.imwrite(preprocessed_path, final_result)
-    print(f"💾 Enhanced preprocessing complete: {preprocessed_path}")
-    print(f"🎯 Applied: Brightness ↑ Contrast ↑ Noise ↓ Morphological Cleanup ✓")
-    
-    return preprocessed_path
-
-def remove_small_noise_components(image, min_area=15):
-    """Remove small connected components (noise) while preserving text"""
-    
+    """Enhanced preprocessing for more consistent OCR results"""
     try:
-        # Find all connected components
-        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
-            image, connectivity=8, ltype=cv2.CV_32S
+        # Load image
+        img = Image.open(image_path)
+
+        # Convert to RGB if needed
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        # Get image dimensions for adaptive processing
+        width, height = img.size
+        
+        # Resize if image is too large (for consistency and performance)
+        max_dimension = 2000
+        if max(width, height) > max_dimension:
+            scale = max_dimension / max(width, height)
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            img = img.resize((new_width, new_height), Image.LANCZOS)
+
+        # Enhanced brightness and contrast with fixed values for consistency
+        img = ImageEnhance.Brightness(img).enhance(1.3)   # Increased brightness
+        img = ImageEnhance.Contrast(img).enhance(1.6)     # Higher contrast for better text clarity
+        img = ImageEnhance.Sharpness(img).enhance(1.4)    # Moderate sharpness
+
+        # Convert to OpenCV format
+        img_array = np.array(img)
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+
+        # Apply Gaussian blur to reduce noise before denoising
+        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+
+        # More aggressive denoising with consistent parameters
+        denoised = cv2.fastNlMeansDenoising(blurred, h=12, templateWindowSize=7, searchWindowSize=21)
+
+        # Apply morphological operations to clean up text
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        cleaned = cv2.morphologyEx(denoised, cv2.MORPH_CLOSE, kernel)
+
+        # Use adaptive threshold for more consistent results across different images
+        thresh = cv2.adaptiveThreshold(
+            cleaned, 
+            255, 
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 
+            15,  # Increased block size for better text handling
+            4    # Increased C value for better threshold
         )
-        
-        # Create output image
-        cleaned_image = np.zeros_like(image)
-        
-        # Keep components that are large enough (likely text)
-        for i in range(1, num_labels):  # Skip background (label 0)
-            area = stats[i, cv2.CC_STAT_AREA]
-            if area >= min_area:
-                # Keep this component
-                cleaned_image[labels == i] = 255
-        
-        print(f"   🧹 Removed {num_labels - 1 - np.sum(stats[1:, cv2.CC_STAT_AREA] >= min_area)} small noise components")
-        return cleaned_image
+
+        # Final morphological operation to connect broken characters
+        final_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
+        final_thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, final_kernel)
+
+        # Save preprocessed image
+        base_name, extension = os.path.splitext(image_path)
+        preprocessed_path = f"{base_name}_preprocessed{extension}"
+        cv2.imwrite(preprocessed_path, final_thresh)
+
+        return preprocessed_path
         
     except Exception as e:
-        print(f"   ⚠️ Connected components cleanup failed: {e}")
-        return image
+        logging.error(f"Preprocessing failed: {e}")
+        return image_path
 
-def preprocess_image_adaptive(image_path):
-    """Adaptive preprocessing that adjusts based on image characteristics"""
-    
-    print(f"🔧 Adaptive preprocessing: {os.path.basename(image_path)}")
-    
-    img = Image.open(image_path)
-    
-    # Analyze image characteristics
-    img_array = np.array(img.convert('L'))  # Convert to grayscale for analysis
-    mean_brightness = np.mean(img_array)
-    contrast_level = np.std(img_array)
-    
-    print(f"📊 Image analysis - Brightness: {mean_brightness:.1f}, Contrast: {contrast_level:.1f}")
-    
-    # Adaptive brightness enhancement
-    if mean_brightness < 100:  # Dark image
-        brightness_factor = 1.6
-        contrast_factor = 2.0
-        print("🌙 Dark image detected - strong enhancement")
-    elif mean_brightness < 150:  # Moderately dark
-        brightness_factor = 1.3
-        contrast_factor = 1.8
-        print("🌤️ Moderately dark - medium enhancement")
-    elif mean_brightness > 200:  # Very bright
-        brightness_factor = 0.95
-        contrast_factor = 1.5
-        print("☀️ Bright image - gentle enhancement")
-    else:  # Normal
-        brightness_factor = 1.1
-        contrast_factor = 1.6
-        print("🌞 Normal brightness - standard enhancement")
-    
-    # Apply adaptive enhancements
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    
-    enhancer = ImageEnhance.Brightness(img)
-    img = enhancer.enhance(brightness_factor)
-    
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(contrast_factor)
-    
-    enhancer = ImageEnhance.Sharpness(img)
-    img = enhancer.enhance(1.4)
-    
-    # Continue with rest of processing...
-    img = img.filter(ImageFilter.MedianFilter(size=3))
-    
-    img_array = np.array(img)
-    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-    denoised = cv2.bilateralFilter(img_bgr, 9, 75, 75)
-    gray = cv2.cvtColor(denoised, cv2.COLOR_BGR2GRAY)
-    
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
-    equalized = clahe.apply(gray)
-    
-    blurred = cv2.GaussianBlur(equalized, (3, 3), 0)
-    
-    adaptive_thresh = cv2.adaptiveThreshold(
-        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-    )
-    _, otsu_thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    combined_thresh = cv2.addWeighted(adaptive_thresh, 0.7, otsu_thresh, 0.3, 0)
-    
-    # Morphological cleanup
-    kernel_small = np.ones((1,1), np.uint8)
-    opened = cv2.morphologyEx(combined_thresh, cv2.MORPH_OPEN, kernel_small)
-    kernel_medium = np.ones((2,2), np.uint8)
-    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_medium)
-    final_cleaned = remove_small_noise_components(closed, min_area=15)
-    
-    # Save result
-    preprocessed_folder = "preprocessed_images"
-    if not os.path.exists(preprocessed_folder):
-        os.makedirs(preprocessed_folder)
-    
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-    extension = os.path.splitext(image_path)[1]
-    preprocessed_path = os.path.join(
-        preprocessed_folder, 
-        f"{base_name}_adaptive_bright{brightness_factor:.1f}_preprocessed{extension}"
-    )
-    
-    cv2.imwrite(preprocessed_path, final_cleaned)
-    print(f"💾 Adaptive preprocessing complete: {preprocessed_path}")
-    
-    return preprocessed_path
-
-# Update your image_to_text_enhanced function for better error handling
 def image_to_text_enhanced(image_path):
-    """Enhanced OCR with fallback options"""
-    
+    """Enhanced OCR with validation for consistency"""
     try:
-        print("🚀 Starting enhanced OCR with preprocessing...")
-        
-        # Try enhanced preprocessing
         preprocessed_path = preprocess_image(image_path)
-        preprocessed_result = image_to_text(preprocessed_path)
         
-        if preprocessed_result != "No text extracted from image":
-            print("✅ Enhanced preprocessing successful!")
-            return preprocessed_result
+        print("  Extracting text with OpenAI...")
+        result = image_to_text(preprocessed_path)
         
-        print("⚠️ Enhanced preprocessing failed, trying adaptive...")
-        
-        # Fallback to adaptive preprocessing
-        adaptive_path = preprocess_image_adaptive(image_path)
-        adaptive_result = image_to_text(adaptive_path)
-        
-        if adaptive_result != "No text extracted from image":
-            print("✅ Adaptive preprocessing successful!")
-            return adaptive_result
-        
-        print("⚠️ All preprocessing failed, trying original image...")
-        
-        # Last resort: original image
-        original_result = image_to_text(image_path)
-        return original_result
+        # Simple validation - check if result seems reasonable
+        if result != "No text extracted from image" and len(result.strip()) > 100:
+            print(f"  ✅ Extraction successful ({len(result)} characters)")
+            return result
+        else:
+            print("  ⚠️ Preprocessed result seems incomplete, trying original...")
+            fallback_result = image_to_text(image_path)
+            if len(fallback_result.strip()) > len(result.strip()):
+                return fallback_result
+            else:
+                return result
         
     except Exception as e:
-        print(f"❌ Enhanced OCR failed: {e}")
         logging.error(f"Enhanced OCR failed: {e}")
+        return "No text extracted from image"
+
+
+# def ocr_image(image_path):
+#     """
+#     Perform OCR on the given image and return the extracted text.
+#     Handles encoding errors gracefully.
+#     """
+#     import pytesseract
+#     from PIL import Image
+#     import re
+
+#     try:
+#         image = Image.open(image_path)
+#     except Exception as e:
+#         logging.error("Failed to open image %s: %s", image_path, e)
+#         return ""
+
+#     try:
+#         # Optional: correct rotation
+#         image = correct_rotation_to_upright(image)
+
+#         custom_config = r'--oem 3 --psm 6'
+#         text = pytesseract.image_to_string(image, config=custom_config)
+#         logging.info("Raw OCR text:\n%s", text)
+
+#         # Handle encoding issues
+#         text = text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+
+#         # Optional: clean non-ASCII characters
+#         text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+
+      
+
         
-        # Emergency fallback
-        try:
-            return image_to_text(image_path)
-        except:
-            return "No text extracted from image"
+               
+
+#         logging.info("Processed OCR text:\n%s", text)
+#         return text
+
+#     except Exception as e:
+#         logging.error("OCR failed for %s: %s", image_path, e)
+#         return ""   
+
 
 def process_death_certificate(image_path):
     """Process a single death certificate image and extract details"""
@@ -390,6 +282,5 @@ def process_death_certificate(image_path):
 
 if __name__ == "__main__":
     
-    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\bruce_alan_data 1_page_1.png"
+    image_path = r"C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1.png"
     process_death_certificate(image_path)
-
