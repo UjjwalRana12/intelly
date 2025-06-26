@@ -6,3 +6,45 @@
 2025-06-20 16:45:38,655 - ERROR - Error details: module 'openai' has no attribute 'completions'
 2025-06-20 16:45:38,720 - ERROR - Error in OCR using openai in image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1.png
 2025-06-20 16:45:38,720 - ERROR - Error details: module 'openai' has no attribute 'completions'
+2025-06-26 08:36:19,850 - INFO - OCR applied successfully using Google Vision API for image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1_preprocessed.png
+2025-06-26 08:36:19,853 - INFO - Extracted text length: 4947
+2025-06-26 08:36:19,857 - ERROR - Error structuring text with OpenAI: 
+
+You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run `openai migrate` to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. `pip install openai==0.28`
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+
+2025-06-26 08:36:25,180 - INFO - HTTP Request: POST https://api.openai.com/v1/completions "HTTP/1.1 200 OK"
+2025-06-26 08:36:25,202 - INFO - Successfully extracted and validated comprehensive details
+2025-06-26 19:11:53,618 - INFO - OCR applied successfully using Google Vision API for image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\Luvenia_DC 1_page_1_preprocessed.png
+2025-06-26 19:11:53,620 - INFO - Extracted text length: 4947
+2025-06-26 19:11:53,626 - ERROR - Error structuring text with OpenAI: 
+
+You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run `openai migrate` to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. `pip install openai==0.28`
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+
+2025-06-26 19:11:59,117 - INFO - HTTP Request: POST https://api.openai.com/v1/completions "HTTP/1.1 200 OK"
+2025-06-26 19:11:59,138 - INFO - Successfully extracted and validated comprehensive details
+2025-06-26 19:15:10,188 - INFO - OCR applied successfully using Google Vision API for image: C:\Users\HP\OneDrive\Desktop\test_ocr\output_images_by_pdfs\COUNTY_OF_OAKLAND_page_1_preprocessed_preprocessed.png
+2025-06-26 19:15:10,191 - INFO - Extracted text length: 4568
+2025-06-26 19:15:10,193 - ERROR - Error structuring text with OpenAI: 
+
+You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run `openai migrate` to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. `pip install openai==0.28`
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+
+2025-06-26 19:15:15,896 - INFO - HTTP Request: POST https://api.openai.com/v1/completions "HTTP/1.1 200 OK"
+2025-06-26 19:15:15,910 - INFO - Successfully extracted and validated comprehensive details
